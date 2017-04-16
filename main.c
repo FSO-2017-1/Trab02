@@ -7,6 +7,9 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <time.h>
+
+
 
 #define BUFFER 256
 
@@ -14,10 +17,12 @@
 int main(){
 	int lazy_child;
 	int worker_child;
-	char msg[BUFFER] ;
+	char msg[BUFFER], msg_usr[BUFFER];
 	int n = 0;
 	int pipefd[4];
 	pid_t child[2];
+
+	printf("DATA : %s HORA: %s\n",__DATE__,__TIME__);
 
 	if (pipe(pipefd)<0){
 		perror("pipe");
@@ -34,12 +39,19 @@ int main(){
 
 	if (lazy_child) {
 		/*Filho preguiçoso escrevendo */
-		char *mensage = "Olá";
+		char msg_time[10] = __TIME__;
+		char *mensage = strcat(msg_time, ": Mensagem 1 do filho dorminhoco \n");
 		/* Operação obrigatória de fechar o descritor*/
 		close(pipefd[0]);
 		/*Escrever no pipe*/
 		write(pipefd[1],mensage, strlen(mensage)+1);
+
+		printf("Informe a mensagem:\n");
+		scanf("%s",msg_usr);
 		close(pipefd[1]);
+
+		printf("%s\n",msg_usr );
+
 	}else{
 		// Processo Pai
 		/* Operação obrigatória de fechar o descritor*/
