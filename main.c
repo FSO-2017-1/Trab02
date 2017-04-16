@@ -10,9 +10,11 @@
 #include <time.h>
 
 
-
 #define BUFFER 256
 
+void pipe_log(char message[80]){
+	char url = "output.txt"
+}
 
 int main(){
 	int lazy_child;
@@ -21,8 +23,11 @@ int main(){
 	int n = 0;
 	int pipefd[4];
 	pid_t child[2];
+	int random = rand() % 3;
 
 	printf("DATA : %s HORA: %s\n",__DATE__,__TIME__);
+
+	fopen("/output.txt", "wb", stdout);
 
 	if (pipe(pipefd)<0){
 		perror("pipe");
@@ -41,17 +46,21 @@ int main(){
 		/*Filho preguiçoso escrevendo */
 		char msg_time[10] = __TIME__;
 		char *mensage = strcat(msg_time, ": Mensagem 1 do filho dorminhoco \n");
+		fprintf(stderr, *mensage, strerror(errno));
+
 		/* Operação obrigatória de fechar o descritor*/
 		close(pipefd[0]);
+
 		/*Escrever no pipe*/
 		write(pipefd[1],mensage, strlen(mensage)+1);
 
-		printf("Informe a mensagem:\n");
-		scanf("%s",msg_usr);
-		close(pipefd[1]);
+		//printf("Informe a mensagem:\n");
+		//scanf("%s",msg_usr);
+		//close(pipefd[1]);
 
-		printf("%s\n",msg_usr );
-
+		//printf("%s\n",msg_usr );
+		sleep(5);
+		printf("DOIDO\n");
 	}else{
 		// Processo Pai
 		/* Operação obrigatória de fechar o descritor*/
@@ -59,14 +68,15 @@ int main(){
 
 		/*Lê a mensagem do pipe que vem do filho preguiçoso*/
 		read(pipefd[0],msg, sizeof msg);
-		printf("A mensagem do filho preguiços: %s\n", msg);
+		printf("A mensagem do filho preguiçoso: %s\n", msg);
 		close(pipefd[0]);
 
+		sleep(30);
+		printf("Processo será assassinado\n");
+		kill(getpid(), SIGKILL);
 	}
 
-
-
-
+	fclose("/output.txt");
 
 	// for(n=0; n<2; n++){
 	// 	if(fork()==0){
@@ -95,3 +105,4 @@ int main(){
 
 	return 0;
 }
+
