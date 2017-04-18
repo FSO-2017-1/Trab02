@@ -9,12 +9,16 @@
 #include <sys/types.h>
 #include <time.h>
 
-
 #define BUFFER 256
 
-void pipe_log(char message[80]){
-	char url = "output.txt"
-}
+/*int alarm_stop = 0;
+unsigned int alarm_period = 30;
+
+void on_alarm(int signal){
+	if(alarm_stop) return;
+	else alarm(alarm_period);
+	printf("HM É MESMO\n");
+}*/
 
 int main(){
 	int lazy_child;
@@ -26,8 +30,6 @@ int main(){
 	int random = rand() % 3;
 
 	printf("DATA : %s HORA: %s\n",__DATE__,__TIME__);
-
-	fopen("/output.txt", "wb", stdout);
 
 	if (pipe(pipefd)<0){
 		perror("pipe");
@@ -44,10 +46,10 @@ int main(){
 
 	if (lazy_child) {
 		/*Filho preguiçoso escrevendo */
+		sleep(random);
 		char msg_time[10] = __TIME__;
 		char *mensage = strcat(msg_time, ": Mensagem 1 do filho dorminhoco \n");
-		fprintf(stderr, *mensage, strerror(errno));
-
+	
 		/* Operação obrigatória de fechar o descritor*/
 		close(pipefd[0]);
 
@@ -59,24 +61,34 @@ int main(){
 		//close(pipefd[1]);
 
 		//printf("%s\n",msg_usr );
-		sleep(5);
-		printf("DOIDO\n");
+		//sleep(5);
+		//printf("DOIDO\n");
 	}else{
 		// Processo Pai
 		/* Operação obrigatória de fechar o descritor*/
+		signal(SIGALRM, on_alarm);
+		alarm(alarm_period);
 		close(pipefd[1]);
 
 		/*Lê a mensagem do pipe que vem do filho preguiçoso*/
 		read(pipefd[0],msg, sizeof msg);
 		printf("A mensagem do filho preguiçoso: %s\n", msg);
-		close(pipefd[0]);
 
-		sleep(30);
+		//Escrita do output file
+		FILE *output = fopen("output.txt", "wb");
+		if(output == NULL){
+			printf("Erro ao abrir o arquivo!\n");
+			exit(1);
+		}
+
+		fprintf(output, msg);
+
+		close(pipefd[0]);
+		fclose(output);
+
 		printf("Processo será assassinado\n");
 		kill(getpid(), SIGKILL);
 	}
-
-	fclose("/output.txt");
 
 	// for(n=0; n<2; n++){
 	// 	if(fork()==0){
