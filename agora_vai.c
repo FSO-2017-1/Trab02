@@ -8,9 +8,23 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <stdbool.h>
 
 #define BUFFER 256
 
+
+int alarm_stop = 0;
+unsigned int alarm_period = 2;
+volatile sig_atomic_t lazy_flag = false;
+
+void on_alarm(int signal){
+	if(alarm_stop) return;
+	else alarm(alarm_period);
+}
+
+void lazy_alarm(int sig){
+	lazy_flag = true;
+}
 
 int main(){
 	int lazy_child;
@@ -34,18 +48,30 @@ int main(){
 	}
 
 	if (lazy_child) {
-		/*Filho preguiçoso escrevendo */
-		/* Operação obrigatória de fechar o descritor*/
-		close(pipefd[0]);
+		signal(SIGALRM, lazy_alarm);
+		alarm(1);
 
-		char msg_time[10] = __TIME__;
-		char *mensage = strcat(msg_time, ": Mensagem 1 do filho dorminhoco \n");
-		printf("%s\n", msg_time);
-		
-		/*Escrever no pipe*/
-		write(pipefd[1],mensage, strlen(mensage)+1);
-		close(pipefd[1]);
+		while(getppid() > 1){
+			if(lazy_flag){
+				lazy_flag = false;
+				/*Filho preguiçoso escrevendo */
+				/* Operação obrigatória de fechar o descritor*/
+				close(pipefd[0]);
+
+				char msg_time[10] = __TIME__;
+				char *mensage = strcat(msg_time, ": Mensagem 1 do filho dorminhoco \n");
+				printf("%s\n", msg_time);
+				
+				/*Escrever no pipe*/
+				write(pipefd[1],mensage, strlen(mensage)+1);
+				close(pipefd[1]);
+				signal(SIGALRM, lazy_alarm);
+				alarm(1);
+			}
+		}
 	}else{
+		signal(SIGALRM, on_alarm);
+		alarm(alarm_period);
 		FILE *output = fopen("output.txt", "wb");
 		if(output == NULL){
 			printf("Erro ao abrir o arquivo!\n");
@@ -54,16 +80,15 @@ int main(){
 		// Processo Pai
 		/* Operação obrigatória de fechar o descritor*/
 		close(pipefd[1]);
-
-
-
-		/*Lê a mensagem do pipe que vem do filho preguiçoso*/
-		read(pipefd[0],msg, sizeof msg);
-		printf("A mensagem do filho preguiços: %s\n", msg);
-		fprintf(output, "%s", msg);
-
+		for(;;){
+			/*Lê a mensagem do pipe que vem do filho preguiçoso*/
+			read(pipefd[0],msg, sizeof msg);
+			//printf("A mensagem do filho preguiços: %s\n", msg);
+			fprintf(output, "%s", msg);
+		}
 		close(pipefd[0]);
 		fclose(output);
+		kill(getpid(), SIGKILL);
 
 	}
 }
