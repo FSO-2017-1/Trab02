@@ -54,45 +54,44 @@ int main(){
 				printf("HELLOOOO \n");
 				printf("PAPAI %d\n", getppid());
 				lazy_flag = false;
+
+				//char msg_time[10] = __TIME__;
+				//char *mensage = strcat(msg_time, ": Mensagem 1 do filho dorminhoco \n");
+				/* Operação obrigatória de fechar o descritor*/
+				//close(pipefd[0]);
+				/*Escrever no pipe*/
+				//write(pipefd[1],mensage, strlen(mensage)+1);
 				signal(SIGALRM, lazy_alarm);
 				alarm(1);
-
-				char msg_time[10] = __TIME__;
-				char *mensage = strcat(msg_time, ": Mensagem 1 do filho dorminhoco \n");
-				/* Operação obrigatória de fechar o descritor*/
-				close(pipefd[0]);
-				/*Escrever no pipe*/
-				write(pipefd[1],mensage, strlen(mensage)+1);
 			}
 		}
 		//kill(getpid(), SIGALRM);
 		
 	}else{
 		printf("PAIZAO\n");
-		printf("lazy_child %d", (int)lazy_child);
 		signal(SIGALRM, on_alarm);
 		alarm(alarm_period);
-		FILE *output = fopen("output.txt", "wb");
+		//FILE *output = fopen("output.txt", "wb");
 		for(;;){
 
-			close(pipefd[1]);
+			//close(pipefd[1]);
 
 			/*Lê a mensagem do pipe que vem do filho preguiçoso*/
-			read(pipefd[0],msg, sizeof msg);
-			printf("A mensagem do filho preguiços: %s\n", msg);
+			//read(pipefd[0],msg, sizeof msg);
+			//printf("A mensagem do filho preguiços: %s\n", msg);
 
 
-			if(output == NULL){
+			/*if(output == NULL){
 				printf("Erro ao abrir o arquivo!\n");
 				exit(1);
 			}
 
 			fprintf(output, msg);
 
-			close(pipefd[0]);
+			close(pipefd[0]);*/
 		
 		}
-		fclose(output);
+		//fclose(output);
 		kill(getpid(), SIGKILL);
 	}
 	return 0;
