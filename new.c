@@ -12,7 +12,7 @@
 #define BUFFER 256
 
 int alarm_stop = 0;
-unsigned int alarm_period = 3;
+unsigned int alarm_period = 10;
 volatile sig_atomic_t lazy_flag = false;
 
 void on_alarm(int signal){
@@ -48,6 +48,8 @@ int main(){
 		printf("PID FILHO %d\n", getpid());
 		signal(SIGALRM, lazy_alarm);
 		alarm(1);
+		/* Operação obrigatória de fechar o descritor*/
+		close(pipefd[1]);
 		//gambirra
 		while(getppid() > 1){
 			if(lazy_flag){
@@ -55,12 +57,12 @@ int main(){
 				printf("PAPAI %d\n", getppid());
 				lazy_flag = false;
 
-				//char msg_time[10] = __TIME__;
-				//char *mensage = strcat(msg_time, ": Mensagem 1 do filho dorminhoco \n");
-				/* Operação obrigatória de fechar o descritor*/
-				//close(pipefd[0]);
+				char msg_time[10] = __TIME__;
+				char *mensage = strcat(msg_time, ": Mensagem 1 do filho dorminhoco \n");
+				
 				/*Escrever no pipe*/
-				//write(pipefd[1],mensage, strlen(mensage)+1);
+				write(pipefd[0],mensage, strlen(mensage)+1);
+				printf("passou write\n");
 				signal(SIGALRM, lazy_alarm);
 				alarm(1);
 			}
@@ -71,27 +73,27 @@ int main(){
 		printf("PAIZAO\n");
 		signal(SIGALRM, on_alarm);
 		alarm(alarm_period);
-		//FILE *output = fopen("output.txt", "wb");
+		FILE *output = fopen("output.txt", "wb");
+		close(pipefd[0]);
 		for(;;){
-
-			//close(pipefd[1]);
+			
 
 			/*Lê a mensagem do pipe que vem do filho preguiçoso*/
-			//read(pipefd[0],msg, sizeof msg);
+			read(pipefd[1],msg, sizeof msg);
 			//printf("A mensagem do filho preguiços: %s\n", msg);
 
 
-			/*if(output == NULL){
+		if(output == NULL){
 				printf("Erro ao abrir o arquivo!\n");
 				exit(1);
 			}
 
-			fprintf(output, msg);
+			fprintf(output, "%s", msg);
 
-			close(pipefd[0]);*/
-		
+			
 		}
-		//fclose(output);
+		close(pipefd[1]);
+		fclose(output);
 		kill(getpid(), SIGKILL);
 	}
 	return 0;
