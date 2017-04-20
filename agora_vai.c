@@ -17,6 +17,7 @@ int alarm_stop = 0;
 unsigned int alarm_period = 2;
 volatile sig_atomic_t lazy_flag = false;
 
+
 void on_alarm(int signal){
 	if(alarm_stop) return;
 	else alarm(alarm_period);
@@ -24,7 +25,9 @@ void on_alarm(int signal){
 
 void lazy_alarm(int sig){
 	lazy_flag = true;
+	
 }
+
 
 int main(){
 	int lazy_child;
@@ -72,6 +75,7 @@ int main(){
 	}else{
 		signal(SIGALRM, on_alarm);
 		alarm(alarm_period);
+
 		FILE *output = fopen("output.txt", "wb");
 		if(output == NULL){
 			printf("Erro ao abrir o arquivo!\n");
@@ -79,16 +83,20 @@ int main(){
 		}
 		// Processo Pai
 		/* Operação obrigatória de fechar o descritor*/
-		close(pipefd[1]);
+		
 		for(;;){
+			close(pipefd[1]);
 			/*Lê a mensagem do pipe que vem do filho preguiçoso*/
 			read(pipefd[0],msg, sizeof msg);
 			//printf("A mensagem do filho preguiços: %s\n", msg);
 			fprintf(output, "%s", msg);
+			
 		}
 		close(pipefd[0]);
 		fclose(output);
-		kill(getpid(), SIGKILL);
+
+		kill(lazy_child, SIGKILL);
 
 	}
+	return 0;
 }
